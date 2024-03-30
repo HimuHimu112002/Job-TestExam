@@ -1,8 +1,9 @@
-const app = require('./app')
+const app = require('./app');
+const DatabaseConnect = require('./src/database/Database');
 
-app.get('/user', (req, res) => {
-    res.send("This is get request and first check this code")
-});
+// Mongodb Database connection
+DatabaseConnect()
+
 app.listen(process.env.PORT, function(){
-    console.log("Backend project running...!")
+    console.log("running success")
 })
