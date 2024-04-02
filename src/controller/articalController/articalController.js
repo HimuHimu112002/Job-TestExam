@@ -33,7 +33,16 @@ async function  articaltCreated(req,res){
 
 async function getAllArtical(req, res){
     try{
-        let data = await articalsModel.find({})
+
+        // Dynamic pagination
+        let pageNo = Number(req.params.pageNo)
+        let perPage = Number(req.params.perPage)
+        let skipRow = (pageNo-1) * perPage
+        data = await articalsModel.aggregate([{
+            $facet:{
+                Rows:[{$skip: skipRow},{$limit:perPage}]
+            }
+        }])
         res.send({ status: "success", message:"success", data:data});
     }catch(e){
         res.send({ status: "fail", error: e.toString()});
@@ -43,6 +52,7 @@ async function getAllArtical(req, res){
 
 async function updateArtical(req, res){
     try {
+
         let _id = req.params.id;
         let reqBody = req.body;
         let data = await articalsModel.updateOne({_id:_id},{$set:reqBody})
@@ -55,6 +65,7 @@ async function updateArtical(req, res){
 
 async function deleteArtical(req, res){
     try{
+        
         let deletData = req.body.id
         let result = await articalsModel.findByIdAndDelete(deletData)
         res.send({status:"success", data:result})

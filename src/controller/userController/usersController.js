@@ -3,17 +3,22 @@ const userModel = require("../../model/userModel/usersModel.js");
 const EmailSend = require('../../utility/emailSend.js');
 const jwt = require("jsonwebtoken");
 const emailVelidation = require('../../utility/emailValidation.js');
+const { EncodeUserToken } = require('../../utility/tokenHelper.js');
 
 let userRegistration =  async (req, res)=>{
   try{
 
     const {email, password} = req.body
+
     if(!email){
       res.send({error: "Please Enter Your Email"}) 
+
     }else if(!emailVelidation(email)){
       res.send({error: "Please Enter The Valid Email"})
+
     }else if(!password){
       res.send({error: "Please Enter The Password"})
+
     }
     else {
 
@@ -24,7 +29,7 @@ let userRegistration =  async (req, res)=>{
       }
 
       bcrypt.hash(password, 10, async function(err, hash) {
-        // Create JWT Token
+        // Create JWT Token for verification original email
         let token = jwt.sign(email, process.env.PRIVATE_KEY, { algorithm: "HS384" });
 
         let user = new userModel({
@@ -46,7 +51,9 @@ let userRegistration =  async (req, res)=>{
 // Decoded and verify token from email
 let tokenVerify =  async (req, res)=>{
   try{
+
     const token = req.params.id;
+
     jwt.verify(token, process.env.PRIVATE_KEY, async function (err, decoded) {
       if (decoded) {
         await userModel.findOneAndUpdate(
@@ -55,10 +62,13 @@ let tokenVerify =  async (req, res)=>{
           { new: true }
         );
         res.send({ status:"success", message:"verify"});
+
       } else {
         res.send({ error: "token unverified" });
+        
       }
     });
+
   }catch(e){
     res.send({status:"fail", message:"Something Went Wrong",e})
   } 
@@ -69,25 +79,48 @@ let tokenVerify =  async (req, res)=>{
 let userLogin = async(req, res)=>{
   try{
 
-    const email = req.params.email;
-    const {password } = req.body;
-    const userEmail = await userModel.findOne({email});
+    const {password,email} = req.body;
+    
+    if(!email){
+      res.send({error: "Please Enter Your Email"}) 
 
-    if (userEmail) {
+    }else if(!emailVelidation(email)){
+      res.send({error: "Please Enter Your Valid Email"})
 
-      if (userEmail.emailVerified) {
-        
-        bcrypt.compare(password, userEmail.password, function (err, result) {
-          if (result) {
-            res.send({status:"success", message:"Login successfull"});
-          } else {
-            res.send({status: "fail", message:"Wrong password"});
+    }else if(!password){
+      res.send({error: "Please Enter The Password"})
+
+    }else{
+
+      const userEmail = await userModel.findOne({email});
+      const emailExit = await userModel.find({email});
+      let user_id= await userModel.find({email:email}).select('_id');
+      if(emailExit.length > 0){
+        if (userEmail) {
+    
+          if (userEmail.emailVerified) {
+            // User Token Create
+            let token=EncodeUserToken(userEmail,user_id[0]['_id'].toString())
+            // access userID
+            let id = user_id[0]
+            // set token for cookie
+            res.cookie('token',token)
+
+            bcrypt.compare(password, userEmail.password, function (err, result) {
+              if (result) {
+                res.send({status:"success", message:"Login success", token:token, user_id:id});
+              } else {
+                res.send({status: "fail", message:"Wrong password"});
+              }
+    
+            });
+    
+          }else {
+            res.send({status:"fail", message: "Unauthorized! Verify email address before login",});
           }
-
-        });
-
-      }else {
-        res.send({status:"fail", message: "Unauthorized! Verify email address before login",});
+        }
+      }else{
+        res.send({status:"fail", message:"Email is not matching"})
       }
     }
   }catch(e){
@@ -99,13 +132,39 @@ let userLogin = async(req, res)=>{
 // Delete User Account
 async function deleteUserAccount(req, res){
   try{
-    let deletData = req.body.id
-    let result = await userModel.findByIdAndDelete(deletData)
-    res.send({status:"success", data:result})
+    
+    let user_id = req.headers.user_id;
+
+    const userDelete = await userModel.findOne({_id:user_id});
+
+    if(userDelete){
+      await userModel.findByIdAndDelete(userDelete)
+      res.send({status:"success"})
+
+    }else{
+      res.send({status:"fail", message:"User Not Found"})
+
+    }
   }catch(e){
     res.send({status:"fail", message:"Something Went Wrong", error:e.toString()})
   }
   
 }
 
-module.exports = {userRegistration,tokenVerify,userLogin,deleteUserAccount};
+// Delete User Account
+async function UserLogout(req, res){
+  
+  try{
+
+    let cookieRemove= {expires:new Date(Date.now()-24*6060*1000), httpOnly:false}
+    res.cookie('token',"",cookieRemove)
+    res.send({status: "success"})
+
+  }catch(e){
+    res.send({status:"fail", message:"Something Went Wrong", error:e.toString()})
+
+  }
+  
+}
+
+module.exports = {userRegistration,tokenVerify,userLogin,deleteUserAccount,UserLogout};
