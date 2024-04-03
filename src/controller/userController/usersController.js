@@ -100,16 +100,14 @@ let userLogin = async(req, res)=>{
         if (userEmail) {
     
           if (userEmail.emailVerified) {
+
             // User Token Create
-            let token=EncodeUserToken(userEmail,user_id[0]['_id'].toString())
-            // access userID
-            let id = user_id[0]
-            // set token for cookie
+            let token = EncodeUserToken(email,user_id[0]['_id'].toString())
             res.cookie('token',token)
 
             bcrypt.compare(password, userEmail.password, function (err, result) {
               if (result) {
-                res.send({status:"success", message:"Login success", token:token, user_id:id});
+                res.send({status:"success", message:"Login success", token:token});
               } else {
                 res.send({status: "fail", message:"Wrong password"});
               }

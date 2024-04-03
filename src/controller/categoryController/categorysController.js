@@ -4,7 +4,6 @@ async function  categoryCreated(req,res){
     try{
 
         const {categoryName,categoryDiscription} = req.body
-
         if(!categoryName){
             res.send({error: "Please Enter Your Category Name"})
 
@@ -12,6 +11,10 @@ async function  categoryCreated(req,res){
             res.send({error: "Please Enter Your Category Discription"})
         }
         else{
+            const checkDuplicateCategoryName = await categorysModel.find({categoryName});
+            if(checkDuplicateCategoryName.length > 0){
+                return res.send({error: "This category already in stored."})
+            }
             let category = new categorysModel({
                 categoryName,
                 categoryDiscription,

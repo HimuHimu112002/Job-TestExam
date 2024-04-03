@@ -82,8 +82,13 @@ async function deleteArtical(req, res){
     try{
         
         let deletData = req.body.id
-        let result = await articalsModel.findByIdAndDelete(deletData)
-        res.send({status:"success", data:result})
+        if(!deletData){
+            res.send({error:"fail", message:"Id not found"})
+        }else{
+
+            let result = await articalsModel.findByIdAndDelete(deletData)
+            res.send({status:"success", data:result})
+        }
 
     }catch(e){
         res.send({status:"fail", message:"Something Went Wrong", error:e.toString()})
