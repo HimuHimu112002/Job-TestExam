@@ -22,9 +22,9 @@ let userRegistration =  async (req, res)=>{
     }
     else {
 
-      let FindduplicateEmail = await userModel.find({email: email})
+      let findDuplicateEmail = await userModel.find({email: email})
 
-      if(FindduplicateEmail.length > 0){
+      if(findDuplicateEmail.length > 0){
         return res.send({error: "This email already in used. Try another email"})
       }
 
@@ -70,7 +70,7 @@ let tokenVerify =  async (req, res)=>{
     });
 
   }catch(e){
-    res.send({status:"fail", message:"Something Went Wrong",e})
+    res.send({status:"fail", message:"Something Went Wrong", error:e.toString()})
   } 
     
 }
@@ -94,6 +94,7 @@ let userLogin = async(req, res)=>{
 
       const userEmail = await userModel.findOne({email});
       const emailExit = await userModel.find({email});
+
       let user_id= await userModel.find({email:email}).select('_id');
       if(emailExit.length > 0){
         if (userEmail) {
@@ -124,13 +125,13 @@ let userLogin = async(req, res)=>{
       }
     }
   }catch(e){
-    res.send({status:"fail", message:"Something Went Wrong",e})
+    res.send({status:"fail", message:"Something Went Wrong", error:e.toString()})
   }
    
 }
 
 // Delete User Account
-async function deleteUserAccount(req, res){
+let deleteUserAccount = async(req, res)=>{
   try{
     
     let user_id = req.headers.user_id;
@@ -152,7 +153,7 @@ async function deleteUserAccount(req, res){
 }
 
 // Delete User Account
-async function UserLogout(req, res){
+let UserLogout = async(req, res)=>{
   
   try{
 

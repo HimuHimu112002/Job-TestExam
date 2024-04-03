@@ -9,17 +9,23 @@ async function  profileCreated(req,res){
         const {name,email,phone,cuntry,city} = req.body
 
         if(!name){
-            res.send({error: "Please Enter Your Profile Name"}) 
+            res.send({error: "Please Enter Your Profile Name"})
+
         }else if(!email){
             res.send({error: "Please Enter Your Email"})
+
         }else if(!phone){
             res.send({error: "Please Enter Your Phone Number"})
+
         }else if(!phoneVelidation(phone)){
             res.send({error: "Please Enter The Bangladeshi Valid Phone Number"})
+
         }else if(!cuntry){
             res.send({error: "Please Select Your Cuntry Name"})
+
         }else if(!city){
             res.send({error: "Please Select Your City Name"})
+            
         }else{
 
             let user_id=req.headers.user_id;
